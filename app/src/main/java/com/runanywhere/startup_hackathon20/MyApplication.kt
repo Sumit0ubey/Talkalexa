@@ -140,14 +140,14 @@ class MyApplication : Application() {
         // Qwen 2.5 0.5B - Basic, fast (374 MB, 2GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/Triangle104/Qwen2.5-0.5B-Instruct-Q6_K-GGUF/resolve/main/qwen2.5-0.5b-instruct-q6_k.gguf",
-            name = "⚡ Qwen 2.5 0.5B (Fast)",
+            name = "⭐⭐⭐ Qwen 2.5 0.5B",
             type = "LLM"
         )
         
         // SmolLM2 360M - Ultra fast (119 MB, 1GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/prithivMLmods/SmolLM2-360M-GGUF/resolve/main/SmolLM2-360M.Q8_0.gguf",
-            name = "⚡⚡ SmolLM2 360M (Fastest)",
+            name = "⭐⭐ SmolLM2 360M",
             type = "LLM"
         )
         
@@ -156,21 +156,21 @@ class MyApplication : Application() {
         // Llama 3.2 1B Q4 - Fast + Good quality (600 MB, 2GB RAM) - BEST FOR SPEED
         addModelFromURL(
             url = "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf",
-            name = "⚡🔥 Llama 3.2 1B Q4 (Fast+Good)",
+            name = "⭐⭐⭐⭐ Llama 3.2 1B Q4",
             type = "LLM"
         )
         
         // Llama 3.2 1B Q6 - Better quality (815 MB, 3GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q6_K_L.gguf",
-            name = "🔥 Llama 3.2 1B Q6 (Better)",
+            name = "⭐⭐⭐⭐ Llama 3.2 1B Q6",
             type = "LLM"
         )
         
         // Qwen 2.5 1.5B - High quality (1.2 GB, 4GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q6_k.gguf",
-            name = "🔥 Qwen 2.5 1.5B (Better)",
+            name = "⭐⭐⭐⭐⭐ Qwen 2.5 1.5B",
             type = "LLM"
         )
         
@@ -179,21 +179,30 @@ class MyApplication : Application() {
         // Qwen 2.5 3B - Excellent quality (2.1 GB, 6GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf",
-            name = "🚀 Qwen 2.5 3B (Best)",
+            name = "⭐⭐⭐⭐⭐⭐ Qwen 2.5 3B",
             type = "LLM"
         )
         
         // Llama 3.2 3B - Top quality (2.0 GB, 6GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf",
-            name = "🚀 Llama 3.2 3B (Premium)",
+            name = "⭐⭐⭐⭐⭐⭐ Llama 3.2 3B",
             type = "LLM"
         )
         
         // Phi-3 Mini 3.8B - Microsoft's best small model (2.3 GB, 6GB RAM)
         addModelFromURL(
             url = "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf",
-            name = "🚀 Phi-3 Mini 3.8B (Smart)",
+            name = "⭐⭐⭐⭐⭐⭐⭐ Phi-3 Mini 3.8B",
+            type = "LLM"
+        )
+        
+        // ===== ULTRA POWERFUL MODEL (8GB+ RAM Required) =====
+        
+        // Mistral 7B v0.3 - Excellent quality (4.4 GB, 8GB RAM)
+        addModelFromURL(
+            url = "https://huggingface.co/MaziyarPanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf",
+            name = "⭐⭐⭐⭐⭐⭐⭐⭐ Mistral 7B",
             type = "LLM"
         )
     }

@@ -33,12 +33,21 @@ class ChatSessionAdapter(
         private val tvTitle: TextView = itemView.findViewById(R.id.sessionTitle)
         private val tvPreview: TextView = itemView.findViewById(R.id.sessionPreview)
         private val tvDate: TextView = itemView.findViewById(R.id.sessionDate)
+        private val tvMessageCount: TextView = itemView.findViewById(R.id.sessionMessageCount)
         private val btnDelete: ImageView = itemView.findViewById(R.id.btnDelete)
 
         fun bind(session: ChatSession) {
             tvTitle.text = session.title
             tvPreview.text = session.preview
             tvDate.text = formatDate(session.updatedAt)
+            
+            // Display actual message count
+            val count = session.messageCount
+            tvMessageCount.text = when {
+                count == 0 -> "No messages"
+                count == 1 -> "1 message"
+                else -> "$count messages"
+            }
 
             itemView.setOnClickListener { onSessionClick(session) }
             btnDelete.setOnClickListener { onDeleteClick(session) }

@@ -88,6 +88,50 @@ interface TTSService {
 
 
 /**
+ * Voice options with different accents and genders
+ */
+data class VoiceOption(
+    val id: String,
+    val name: String,
+    val locale: Locale,
+    val gender: String, // "Male" or "Female"
+    val country: String
+)
+
+/**
+ * Available voice options
+ */
+object VoiceOptions {
+    val VOICES = listOf(
+        VoiceOption("en_us_male", "🇺🇸 English (US) - Male", Locale.US, "Male", "United States"),
+        VoiceOption("en_us_female", "🇺🇸 English (US) - Female", Locale.US, "Female", "United States"),
+        VoiceOption("en_gb_male", "🇬🇧 English (UK) - Male", Locale.UK, "Male", "United Kingdom"),
+        VoiceOption("en_gb_female", "🇬🇧 English (UK) - Female", Locale.UK, "Female", "United Kingdom"),
+        VoiceOption("en_au_male", "🇦🇺 English (AU) - Male", Locale("en", "AU"), "Male", "Australia"),
+        VoiceOption("en_au_female", "🇦🇺 English (AU) - Female", Locale("en", "AU"), "Female", "Australia"),
+        VoiceOption("en_in_male", "🇮🇳 English (IN) - Male", Locale("en", "IN"), "Male", "India"),
+        VoiceOption("en_in_female", "🇮🇳 English (IN) - Female", Locale("en", "IN"), "Female", "India"),
+        VoiceOption("es_es_male", "🇪🇸 Spanish (ES) - Male", Locale("es", "ES"), "Male", "Spain"),
+        VoiceOption("es_es_female", "🇪🇸 Spanish (ES) - Female", Locale("es", "ES"), "Female", "Spain"),
+        VoiceOption("fr_fr_male", "🇫🇷 French (FR) - Male", Locale.FRANCE, "Male", "France"),
+        VoiceOption("fr_fr_female", "🇫🇷 French (FR) - Female", Locale.FRANCE, "Female", "France"),
+        VoiceOption("de_de_male", "🇩🇪 German (DE) - Male", Locale.GERMANY, "Male", "Germany"),
+        VoiceOption("de_de_female", "🇩🇪 German (DE) - Female", Locale.GERMANY, "Female", "Germany"),
+        VoiceOption("it_it_male", "🇮🇹 Italian (IT) - Male", Locale.ITALY, "Male", "Italy"),
+        VoiceOption("it_it_female", "🇮🇹 Italian (IT) - Female", Locale.ITALY, "Female", "Italy"),
+        VoiceOption("ja_jp_male", "🇯🇵 Japanese (JP) - Male", Locale.JAPAN, "Male", "Japan"),
+        VoiceOption("ja_jp_female", "🇯🇵 Japanese (JP) - Female", Locale.JAPAN, "Female", "Japan"),
+        VoiceOption("ko_kr_male", "🇰🇷 Korean (KR) - Male", Locale.KOREA, "Male", "South Korea"),
+        VoiceOption("ko_kr_female", "🇰🇷 Korean (KR) - Female", Locale.KOREA, "Female", "South Korea"),
+        VoiceOption("zh_cn_male", "🇨🇳 Chinese (CN) - Male", Locale.CHINA, "Male", "China"),
+        VoiceOption("zh_cn_female", "🇨🇳 Chinese (CN) - Female", Locale.CHINA, "Female", "China")
+    )
+    
+    fun getVoiceById(id: String): VoiceOption? = VOICES.find { it.id == id }
+    fun getDefaultVoice(): VoiceOption = VOICES[0] // US Male
+}
+
+/**
  * Implementation of TTSService using Android TextToSpeech.
  * Provides text-to-speech functionality for assistant responses.
  * 
@@ -100,12 +144,38 @@ class TTSServiceImpl(
     private var tts: TextToSpeech? = null
     private var isInitialized = false
     private var ttsEnabled = true
+    private var currentVoice: VoiceOption = VoiceOptions.getDefaultVoice()
     
     private val _stateFlow = MutableStateFlow<TTSState>(TTSState.Idle)
     
     init {
         initializeTTS()
     }
+    
+    /**
+     * Sets the voice for TTS
+     */
+    fun setVoice(voiceId: String) {
+        val voice = VoiceOptions.getVoiceById(voiceId) ?: return
+        currentVoice = voice
+        
+        if (isInitialized) {
+            tts?.language = voice.locale
+            
+            // Try to set specific voice with gender preference
+            tts?.voice = tts?.voices?.find { v ->
+                v.locale == voice.locale && 
+                (voice.gender.lowercase() in v.name.lowercase())
+            } ?: tts?.voices?.find { v ->
+                v.locale == voice.locale
+            }
+        }
+    }
+    
+    /**
+     * Gets current voice
+     */
+    fun getCurrentVoice(): VoiceOption = currentVoice
     
     /**
      * Initializes the Android TextToSpeech engine.

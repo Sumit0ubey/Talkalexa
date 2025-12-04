@@ -10,11 +10,11 @@ import android.os.Environment
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
+import android.view.animation.AnimationUtils
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.button.MaterialButton
 import com.runanywhere.sdk.public.RunAnywhere
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -39,7 +39,7 @@ class AudioNotesActivity : AppCompatActivity() {
 
     private lateinit var btnBack: ImageView
     private lateinit var spinnerModel: Spinner
-    private lateinit var btnSelectFile: MaterialButton
+    private lateinit var btnSelectFile: Button
     private lateinit var selectedFileInfo: LinearLayout
     private lateinit var tvFileName: TextView
     private lateinit var tvFileDuration: TextView
@@ -50,8 +50,8 @@ class AudioNotesActivity : AppCompatActivity() {
     private lateinit var resultsSection: LinearLayout
     private lateinit var tvKeyPoints: TextView
     private lateinit var tvTerminologies: TextView
-    private lateinit var btnDownloadNotes: MaterialButton
-    private lateinit var btnAnalyze: MaterialButton
+    private lateinit var btnDownloadNotes: Button
+    private lateinit var btnAnalyze: Button
 
     private var selectedAudioUri: Uri? = null
     private var extractedText = ""
@@ -69,10 +69,16 @@ class AudioNotesActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_audio_notes)
-        initViews()
-        setupListeners()
-        loadModel()
+        try {
+            setContentView(R.layout.activity_audio_notes)
+            initViews()
+            setupListeners()
+            loadModel()
+        } catch (e: Exception) {
+            Log.e(TAG, "onCreate error: $e", e)
+            Toast.makeText(this, "Error loading Audio Notes: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
+        }
     }
     
 
@@ -98,30 +104,41 @@ class AudioNotesActivity : AppCompatActivity() {
     }
     
     private fun setupModelSpinner() {
-        val models = listOf(
+        val modelNames = listOf(
             "Select AI Model",
-            "Llama-3.2-1B",
-            "Phi-3.5-mini",
-            "Qwen2.5-0.5B",
-            "SmolLM2-135M"
+            "Llama 3.2 1B",
+            "Phi 3.5 Mini",
+            "Qwen 2.5 0.5B",
+            "SmolLM2 135M"
         )
         
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, models)
+        // Map display names to actual model IDs
+        val modelIds = mapOf(
+            "Llama 3.2 1B" to "Llama-3.2-1B-Instruct-Q4_K_M",
+            "Phi 3.5 Mini" to "Phi-3.5-mini-instruct-Q4_K_M",
+            "Qwen 2.5 0.5B" to "Qwen2.5-0.5B-Instruct-Q4_K_M",
+            "SmolLM2 135M" to "SmolLM2-135M-Instruct-Q4_K_M"
+        )
+        
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modelNames)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerModel.adapter = adapter
         
         spinnerModel.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (position > 0) {
-                    val modelId = models[position]
-                    loadAIModel(modelId)
+                    val displayName = modelNames[position]
+                    val actualModelId = modelIds[displayName]
+                    if (actualModelId != null) {
+                        loadAIModel(actualModelId, displayName)
+                    }
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
     
-    private fun loadAIModel(modelId: String) {
+    private fun loadAIModel(modelId: String, displayName: String) {
         if (isLoadingAIModel) {
             Toast.makeText(this, "Already loading model...", Toast.LENGTH_SHORT).show()
             return
@@ -133,41 +150,69 @@ class AudioNotesActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@AudioNotesActivity, "Loading $modelId...", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@AudioNotesActivity, "⏳ Loading $displayName...", Toast.LENGTH_SHORT).show()
                 }
                 
+                Log.d(TAG, "Loading model: $modelId")
+                
+                // Actually load the model
                 RunAnywhere.loadModel(modelId)
                 
-                // Test if model loaded
+                // Wait a bit for model to initialize
+                delay(1000)
+                
+                // Test if model loaded with a simple prompt
                 val testPrompt = "Hi"
                 var loaded = false
+                var responseReceived = false
+                
                 val opts = com.runanywhere.sdk.models.RunAnywhereGenerationOptions(
-                    maxTokens = 5, temperature = 0.7f, topP = 0.9f,
-                    enableRealTimeTracking = false, stopSequences = emptyList(),
-                    streamingEnabled = true, preferredExecutionTarget = null,
-                    structuredOutput = null, systemPrompt = null, topK = 40,
-                    repetitionPenalty = 1.1f, frequencyPenalty = null,
-                    presencePenalty = null, seed = null, contextLength = 512
+                    maxTokens = 10, 
+                    temperature = 0.7f, 
+                    topP = 0.9f,
+                    enableRealTimeTracking = false, 
+                    stopSequences = emptyList(),
+                    streamingEnabled = true, 
+                    preferredExecutionTarget = null,
+                    structuredOutput = null, 
+                    systemPrompt = null, 
+                    topK = 40,
+                    repetitionPenalty = 1.1f, 
+                    frequencyPenalty = null,
+                    presencePenalty = null, 
+                    seed = null, 
+                    contextLength = 512
                 )
                 
-                withTimeoutOrNull(3000) {
-                    RunAnywhere.generateStream(testPrompt, opts).collect { 
-                        loaded = true
+                try {
+                    withTimeoutOrNull(5000) {
+                        RunAnywhere.generateStream(testPrompt, opts).collect { chunk ->
+                            responseReceived = true
+                            if (chunk.isNotEmpty()) {
+                                loaded = true
+                                Log.d(TAG, "Model test response: $chunk")
+                            }
+                        }
                     }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Model test failed: $e")
                 }
                 
                 withContext(Dispatchers.Main) {
                     if (loaded) {
-                        Toast.makeText(this@AudioNotesActivity, "✅ $modelId loaded!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@AudioNotesActivity, "✅ $displayName ready!", Toast.LENGTH_SHORT).show()
+                        Log.d(TAG, "Model $modelId loaded successfully")
+                    } else if (responseReceived) {
+                        Toast.makeText(this@AudioNotesActivity, "⚠️ $displayName loaded but slow", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(this@AudioNotesActivity, "⚠️ Model load timeout", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@AudioNotesActivity, "❌ $displayName failed to respond", Toast.LENGTH_LONG).show()
                     }
                 }
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Model load error: $e", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@AudioNotesActivity, "❌ Failed to load $modelId", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@AudioNotesActivity, "❌ Failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             } finally {
                 isLoadingAIModel = false
@@ -480,17 +525,15 @@ class AudioNotesActivity : AppCompatActivity() {
             Log.d(TAG, "=== AI ANALYZE START ===")
             Log.d(TAG, "AI analyzing text length: ${text.length}")
             
-            // Limit text to 500 chars to avoid context overflow
-            val limitedText = if (text.length > 500) {
-                Log.d(TAG, "Text too long, truncating to 500 chars")
-                text.take(500) + "..."
+            // Limit text to 800 chars for better context
+            val limitedText = if (text.length > 800) {
+                Log.d(TAG, "Text too long, truncating to 800 chars")
+                text.take(800)
             } else text
             
-            val prompt = """Summarize this audio lecture in 3-4 clear sentences that capture the complete explanation:
+            val prompt = """Audio transcript: "$limitedText"
 
-"$limitedText"
-
-Summary:"""
+Write a concise 2-3 sentence summary:"""
             
             Log.d(TAG, "Prompt length: ${prompt.length}")
             
@@ -555,52 +598,63 @@ Summary:"""
     private fun parseResp(r: String, originalText: String) {
         Log.d(TAG, "Parsing response...")
         
-        // Clean up the response
-        val cleanResponse = r.trim()
+        // Clean up the response - remove common AI prefixes
+        var cleanResponse = r.trim()
+            .removePrefix("Here is a summary")
+            .removePrefix("Here's a summary")
             .removePrefix("Summary:")
             .removePrefix("summary:")
+            .removePrefix(":")
+            .removePrefix("of the audio lecture in")
+            .removePrefix("in 3-4 clear sentences:")
             .trim()
+        
+        // Remove any leading colons or dashes
+        cleanResponse = cleanResponse.trimStart(':', '-', ' ')
         
         Log.d(TAG, "Clean response: $cleanResponse")
         
-        if (cleanResponse.isNotEmpty()) {
-            // Split into sentences
+        if (cleanResponse.isNotEmpty() && cleanResponse.length > 30) {
+            // Split into sentences and clean
             val sentences = cleanResponse.split(Regex("[.!?]"))
                 .map { it.trim() }
-                .filter { it.length > 20 }
+                .filter { it.length > 25 && !it.contains("summary", ignoreCase = true) }
+                .distinct() // Remove duplicates
             
-            Log.d(TAG, "Found ${sentences.size} sentences")
+            Log.d(TAG, "Found ${sentences.size} unique sentences")
             
             if (sentences.isNotEmpty()) {
-                // First 2-3 sentences as summary
+                // Take first 2-3 unique sentences
                 keyPointsText = sentences.take(3)
                     .joinToString(". ") + "."
-                
-                // Extract technical terms from transcription
-                val techWords = originalText.split(Regex("\\s+"))
-                    .filter { word -> 
-                        word.length > 5 && 
-                        (word[0].isUpperCase() || word.contains(Regex("[A-Z]{2,}")))
-                    }
-                    .distinct()
-                    .take(5)
-                
-                terminologiesText = if (techWords.isNotEmpty()) {
-                    techWords.joinToString("\n") { "• $it" }
-                } else {
-                    "• ${originalText.split(" ").take(10).joinToString(" ")}..."
-                }
             } else {
-                // Fallback: use AI response as-is
+                // Use cleaned response as-is
                 keyPointsText = cleanResponse
-                terminologiesText = "• ${originalText.split(" ").take(15).joinToString(" ")}..."
             }
         } else {
-            // Complete fallback
-            Log.w(TAG, "Empty response, using transcription")
-            val words = originalText.split(" ")
-            keyPointsText = words.take(50).joinToString(" ") + "..."
-            terminologiesText = "• Transcription: ${words.size} words"
+            // Fallback: create summary from transcription
+            Log.w(TAG, "AI response too short, using transcription")
+            val words = originalText.split(Regex("\\s+"))
+            keyPointsText = words.take(40).joinToString(" ") + "..."
+        }
+        
+        // Extract technical terms - look for capitalized words and acronyms
+        val techWords = originalText.split(Regex("\\s+"))
+            .filter { word -> 
+                val clean = word.replace(Regex("[^a-zA-Z]"), "")
+                clean.length > 3 && (
+                    clean.matches(Regex("[A-Z]{2,}")) || // Acronyms like LLM, AI
+                    (clean[0].isUpperCase() && clean.drop(1).any { it.isLowerCase() }) // Proper nouns
+                )
+            }
+            .map { it.replace(Regex("[^a-zA-Z]"), "") }
+            .distinct()
+            .take(6)
+        
+        terminologiesText = if (techWords.isNotEmpty()) {
+            techWords.joinToString("\n") { "• $it" }
+        } else {
+            "• No technical terms detected"
         }
         
         Log.d(TAG, "Summary: $keyPointsText")
@@ -608,20 +662,57 @@ Summary:"""
     }
 
     private fun show() {
-        processingSection.visibility = View.VISIBLE
-        resultsSection.visibility = View.GONE
-        btnAnalyze.isEnabled = false
-        btnSelectFile.isEnabled = false
-        progressBar.isIndeterminate = false
+        try {
+            // Fade out results, slide in processing
+            if (resultsSection.visibility == View.VISIBLE) {
+                val fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out)
+                resultsSection.startAnimation(fadeOut)
+            }
+            
+            processingSection.visibility = View.VISIBLE
+            val slideIn = AnimationUtils.loadAnimation(this, R.anim.slide_in_bottom)
+            processingSection.startAnimation(slideIn)
+            
+            resultsSection.visibility = View.GONE
+            btnAnalyze.isEnabled = false
+            btnSelectFile.isEnabled = false
+            progressBar.isIndeterminate = false
+        } catch (e: Exception) {
+            Log.e(TAG, "Animation error in show(): $e")
+            // Fallback without animation
+            processingSection.visibility = View.VISIBLE
+            resultsSection.visibility = View.GONE
+            btnAnalyze.isEnabled = false
+            btnSelectFile.isEnabled = false
+            progressBar.isIndeterminate = false
+        }
     }
 
     private fun showRes() {
-        processingSection.visibility = View.GONE
-        resultsSection.visibility = View.VISIBLE
-        btnAnalyze.isEnabled = true
-        btnSelectFile.isEnabled = true
-        tvKeyPoints.text = keyPointsText
-        tvTerminologies.text = terminologiesText
+        try {
+            // Fade out processing, scale in results
+            val fadeOut = AnimationUtils.loadAnimation(this, R.anim.fade_out)
+            processingSection.startAnimation(fadeOut)
+            processingSection.visibility = View.GONE
+            
+            resultsSection.visibility = View.VISIBLE
+            val scaleIn = AnimationUtils.loadAnimation(this, R.anim.scale_in)
+            resultsSection.startAnimation(scaleIn)
+            
+            btnAnalyze.isEnabled = true
+            btnSelectFile.isEnabled = true
+            tvKeyPoints.text = keyPointsText
+            tvTerminologies.text = terminologiesText
+        } catch (e: Exception) {
+            Log.e(TAG, "Animation error in showRes(): $e")
+            // Fallback without animation
+            processingSection.visibility = View.GONE
+            resultsSection.visibility = View.VISIBLE
+            btnAnalyze.isEnabled = true
+            btnSelectFile.isEnabled = true
+            tvKeyPoints.text = keyPointsText
+            tvTerminologies.text = terminologiesText
+        }
     }
 
     private fun err(msg: String) {

@@ -86,8 +86,7 @@ class ChatViewModel(
         currentSessionId = newSession.id
         _messages.value = emptyList()
         
-        // Save new session
-        sessionRepository.saveSession(newSession)
+        // DON'T save empty session - only save when first message is sent
         sessionRepository.setCurrentSessionId(newSession.id)
         loadChatSessions()
     }
@@ -120,7 +119,13 @@ class ChatViewModel(
     private fun saveCurrentSession() {
         val sessionId = currentSessionId ?: return
         val messages = _messages.value
-        if (messages.isEmpty()) return
+        
+        // Don't save empty sessions
+        if (messages.isEmpty()) {
+            // Delete empty session if it exists
+            sessionRepository.deleteSession(sessionId)
+            return
+        }
         
         val existingSession = sessionRepository.getSession(sessionId)
         val title = existingSession?.title ?: messages.firstOrNull { it.isUser }?.text?.take(30) ?: "New Chat"

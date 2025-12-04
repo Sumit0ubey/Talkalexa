@@ -95,29 +95,61 @@ class SettingsFragment : Fragment() {
     
     private fun loadAvailableVoices() {
         try {
-            // Get actual TTS voices from device
-            availableVoices = tts?.voices?.filter { voice ->
-                voice.locale.language == "en" && !voice.isNetworkConnectionRequired
-            }?.sortedBy { it.name } ?: emptyList()
+            // Get all TTS voices from device
+            val allVoices = tts?.voices?.filter { voice ->
+                !voice.isNetworkConnectionRequired
+            }?.sortedBy { it.locale.toString() + it.name } ?: emptyList()
             
             // Build voice characters from actual voices
             voiceCharacters.clear()
             
-            // Add default presets first
-            voiceCharacters.add(VoiceCharacter("Default", 1.0f, 1.0f, "Default voice", null))
-            voiceCharacters.add(VoiceCharacter("Slow & Deep", 0.8f, 0.7f, "Slower, deeper tone", null))
-            voiceCharacters.add(VoiceCharacter("Fast & High", 1.3f, 1.3f, "Faster, higher pitch", null))
-            voiceCharacters.add(VoiceCharacter("Calm", 0.85f, 0.95f, "Calm and relaxed", null))
-            voiceCharacters.add(VoiceCharacter("Energetic", 1.2f, 1.1f, "Fast and lively", null))
+            // Group voices by locale and gender
+            val voicesByLocale = allVoices.groupBy { it.locale }
             
-            // Add actual device voices
-            availableVoices.take(10).forEachIndexed { index, voice ->
-                val displayName = getVoiceDisplayName(voice, index)
-                voiceCharacters.add(VoiceCharacter(displayName, 1.0f, 1.0f, voice.name, voice))
+            // Add voices by country/accent with male/female variants
+            voicesByLocale.forEach { (locale, voices) ->
+                val country = getCountryEmoji(locale)
+                val localeName = getLocaleName(locale)
+                
+                // Find male and female voices
+                val maleVoices = voices.filter { 
+                    it.name.lowercase().contains("male") && !it.name.lowercase().contains("female")
+                }
+                val femaleVoices = voices.filter { 
+                    it.name.lowercase().contains("female")
+                }
+                val neutralVoices = voices.filter { 
+                    !it.name.lowercase().contains("male") && !it.name.lowercase().contains("female")
+                }
+                
+                // Add male voice
+                (maleVoices.firstOrNull() ?: neutralVoices.firstOrNull())?.let { voice ->
+                    voiceCharacters.add(VoiceCharacter(
+                        "$country $localeName - Male",
+                        1.0f, 0.9f,
+                        "Male voice with $localeName accent",
+                        voice
+                    ))
+                }
+                
+                // Add female voice
+                (femaleVoices.firstOrNull() ?: neutralVoices.getOrNull(1))?.let { voice ->
+                    voiceCharacters.add(VoiceCharacter(
+                        "$country $localeName - Female",
+                        1.0f, 1.1f,
+                        "Female voice with $localeName accent",
+                        voice
+                    ))
+                }
             }
             
-            // Add custom option at end
-            voiceCharacters.add(VoiceCharacter("Custom", 1.0f, 1.0f, "Use sliders", null))
+            // Add preset voice styles
+            voiceCharacters.add(VoiceCharacter("🎭 Calm & Slow", 0.85f, 0.95f, "Relaxed and clear", null))
+            voiceCharacters.add(VoiceCharacter("⚡ Fast & Energetic", 1.3f, 1.15f, "Quick and lively", null))
+            voiceCharacters.add(VoiceCharacter("🎙️ Deep Voice", 0.95f, 0.7f, "Lower, deeper tone", null))
+            voiceCharacters.add(VoiceCharacter("🎵 High Pitch", 1.05f, 1.4f, "Higher, lighter tone", null))
+            voiceCharacters.add(VoiceCharacter("🎬 Narrator", 0.9f, 0.85f, "Story-telling style", null))
+            voiceCharacters.add(VoiceCharacter("⚙️ Custom", 1.0f, 1.0f, "Use sliders below", null))
             
             // Update dropdown on main thread
             activity?.runOnUiThread {
@@ -127,12 +159,15 @@ class SettingsFragment : Fragment() {
             e.printStackTrace()
             // Fallback to basic presets
             voiceCharacters.clear()
-            voiceCharacters.add(VoiceCharacter("Default", 1.0f, 1.0f, "Default voice", null))
-            voiceCharacters.add(VoiceCharacter("Slow", 0.8f, 1.0f, "Slower speech", null))
-            voiceCharacters.add(VoiceCharacter("Fast", 1.3f, 1.0f, "Faster speech", null))
-            voiceCharacters.add(VoiceCharacter("Deep", 1.0f, 0.7f, "Lower pitch", null))
-            voiceCharacters.add(VoiceCharacter("High", 1.0f, 1.3f, "Higher pitch", null))
-            voiceCharacters.add(VoiceCharacter("Custom", 1.0f, 1.0f, "Use sliders", null))
+            voiceCharacters.add(VoiceCharacter("🇺🇸 US English - Male", 1.0f, 0.9f, "American male", null))
+            voiceCharacters.add(VoiceCharacter("🇺🇸 US English - Female", 1.0f, 1.1f, "American female", null))
+            voiceCharacters.add(VoiceCharacter("🇬🇧 British - Male", 1.0f, 0.9f, "British male", null))
+            voiceCharacters.add(VoiceCharacter("🇬🇧 British - Female", 1.0f, 1.1f, "British female", null))
+            voiceCharacters.add(VoiceCharacter("🇮🇳 Indian - Male", 1.0f, 0.9f, "Indian male", null))
+            voiceCharacters.add(VoiceCharacter("🇮🇳 Indian - Female", 1.0f, 1.1f, "Indian female", null))
+            voiceCharacters.add(VoiceCharacter("🎭 Calm & Slow", 0.85f, 0.95f, "Relaxed", null))
+            voiceCharacters.add(VoiceCharacter("⚡ Fast & Energetic", 1.3f, 1.15f, "Quick", null))
+            voiceCharacters.add(VoiceCharacter("⚙️ Custom", 1.0f, 1.0f, "Use sliders", null))
             
             activity?.runOnUiThread {
                 setupVoiceDropdown()
@@ -140,16 +175,57 @@ class SettingsFragment : Fragment() {
         }
     }
     
-    private fun getVoiceDisplayName(voice: android.speech.tts.Voice, index: Int): String {
-        val name = voice.name.lowercase()
+    private fun getCountryEmoji(locale: Locale): String {
+        return when (locale.country.uppercase()) {
+            "US" -> "🇺🇸"
+            "GB" -> "🇬🇧"
+            "AU" -> "🇦🇺"
+            "IN" -> "🇮🇳"
+            "CA" -> "🇨🇦"
+            "IE" -> "🇮🇪"
+            "ZA" -> "🇿🇦"
+            "NZ" -> "🇳🇿"
+            "ES" -> "🇪🇸"
+            "MX" -> "🇲🇽"
+            "FR" -> "🇫🇷"
+            "DE" -> "🇩🇪"
+            "IT" -> "🇮🇹"
+            "PT" -> "🇵🇹"
+            "BR" -> "🇧🇷"
+            "RU" -> "🇷🇺"
+            "JP" -> "🇯🇵"
+            "KR" -> "🇰🇷"
+            "CN" -> "🇨🇳"
+            "TW" -> "🇹🇼"
+            "HK" -> "🇭🇰"
+            else -> "🌍"
+        }
+    }
+    
+    private fun getLocaleName(locale: Locale): String {
         return when {
-            name.contains("male") && !name.contains("female") -> "Male Voice ${index + 1}"
-            name.contains("female") -> "Female Voice ${index + 1}"
-            name.contains("en-us") -> "US English ${index + 1}"
-            name.contains("en-gb") -> "British ${index + 1}"
-            name.contains("en-au") -> "Australian ${index + 1}"
-            name.contains("en-in") -> "Indian English ${index + 1}"
-            else -> "Voice ${index + 1}"
+            locale.country == "US" -> "US English"
+            locale.country == "GB" -> "British"
+            locale.country == "AU" -> "Australian"
+            locale.country == "IN" -> "Indian"
+            locale.country == "CA" -> "Canadian"
+            locale.country == "IE" -> "Irish"
+            locale.country == "ZA" -> "South African"
+            locale.country == "NZ" -> "New Zealand"
+            locale.language == "es" && locale.country == "ES" -> "Spanish"
+            locale.language == "es" && locale.country == "MX" -> "Mexican"
+            locale.language == "fr" -> "French"
+            locale.language == "de" -> "German"
+            locale.language == "it" -> "Italian"
+            locale.language == "pt" && locale.country == "BR" -> "Brazilian"
+            locale.language == "pt" -> "Portuguese"
+            locale.language == "ru" -> "Russian"
+            locale.language == "ja" -> "Japanese"
+            locale.language == "ko" -> "Korean"
+            locale.language == "zh" && locale.country == "CN" -> "Chinese"
+            locale.language == "zh" && locale.country == "TW" -> "Taiwanese"
+            locale.language == "zh" && locale.country == "HK" -> "Hong Kong"
+            else -> locale.displayLanguage
         }
     }
     

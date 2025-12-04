@@ -1,169 +1,237 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/backgroundColor"
     android:orientation="vertical">
 
-    <!-- Header -->
+    <!-- Header with 3D effect -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/surfaceColor"
+        android:background="@drawable/bg_card_3d"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp"
-        android:elevation="4dp">
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="18dp"
+        android:elevation="8dp">
 
         <ImageView
             android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="8dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_icon_3d"
+            android:padding="10dp"
             android:src="@drawable/ic_close"
-            app:tint="@color/textPrimary" />
+            android:tint="@color/textPrimary" />
 
-        <TextView
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="12dp"
-            android:text="Audio Notes Analyzer"
-            android:textColor="@color/textPrimary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Audio Notes"
+                android:textColor="@color/textPrimary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:shadowColor="#40000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="2" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI-Powered Summarization"
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_audio_notes"
+            android:tint="@color/colorPrimary" />
     </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp"
+            android:clipToPadding="false">
 
-            <!-- Model Selection -->
+            <!-- Model Selection with 3D Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_dark"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="20dp"
+                android:background="@drawable/bg_card_3d"
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:gravity="center_vertical">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <FrameLayout
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_icon_3d">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_sparkle"
+                        android:tint="@color/colorPrimary" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="AI Model"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
 
-                <Spinner
-                    android:id="@+id/spinnerModel"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_input_field"
-                    android:paddingHorizontal="12dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AI Model"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <Spinner
+                        android:id="@+id/spinnerModel"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_input_3d"
+                        android:paddingHorizontal="12dp" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- Upload Section -->
+            <!-- Upload Section with 3D -->
             <LinearLayout
                 android:id="@+id/uploadSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_card_dark"
+                android:background="@drawable/bg_card_3d"
                 android:orientation="vertical"
-                android:padding="24dp"
+                android:padding="32dp"
                 android:gravity="center">
 
+                <!-- 3D Icon -->
                 <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:background="@drawable/bg_model_circle">
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:background="@drawable/bg_icon_3d">
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:id="@+id/iconAudio"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_audio_notes"
-                        app:tint="@color/colorPrimary" />
+                        android:tint="@color/colorPrimary" />
                 </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="24dp"
                     android:text="Upload Audio File"
                     android:textColor="@color/textPrimary"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:shadowColor="#40000000"
+                    android:shadowDx="1"
+                    android:shadowDy="1"
+                    android:shadowRadius="3" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Supported: MP3, WAV, M4A, OGG\nMax duration: 5 minutes"
+                    android:text="MP3, WAV, M4A, OGG • Max 5 min"
                     android:textColor="@color/textSecondary"
                     android:textSize="13sp"
                     android:gravity="center" />
 
-                <com.google.android.material.button.MaterialButton
+                <Button
                     android:id="@+id/btnSelectFile"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="20dp"
-                    android:text="Select Audio File"
-                    android:textSize="14sp"
-                    app:cornerRadius="24dp"
-                    app:icon="@drawable/add_icon"
-                    app:iconGravity="textStart" />
+                    android:layout_height="56dp"
+                    android:layout_marginTop="24dp"
+                    android:paddingHorizontal="36dp"
+                    android:text="📁 Select File"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_button_3d" />
 
-                <!-- Selected file info -->
+                <!-- Selected File Info -->
                 <LinearLayout
                     android:id="@+id/selectedFileInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_input_field"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_input_3d"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="12dp"
+                    android:padding="16dp"
                     android:visibility="gone">
 
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:src="@drawable/audio_icon"
-                        app:tint="@color/colorPrimary" />
+                        android:tint="@color/colorPrimary" />
 
-                    <TextView
-                        android:id="@+id/tvFileName"
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
-                        android:text="audio_file.mp3"
-                        android:textColor="@color/textPrimary"
-                        android:textSize="14sp"
-                        android:ellipsize="middle"
-                        android:singleLine="true" />
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tvFileDuration"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2:30"
-                        android:textColor="@color/textSecondary"
-                        android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/tvFileName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="audio_file.mp3"
+                            android:textColor="@color/textPrimary"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            android:ellipsize="middle"
+                            android:singleLine="true" />
+
+                        <TextView
+                            android:id="@+id/tvFileDuration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="2:30"
+                            android:textColor="@color/textSecondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_check"
+                        android:tint="@color/colorPrimary" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -172,36 +240,51 @@
                 android:id="@+id/processingSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_card_dark"
+                android:layout_marginTop="20dp"
+                android:visibility="gone"
+                android:background="@drawable/bg_card_3d"
                 android:orientation="vertical"
-                android:padding="20dp"
-                android:visibility="gone">
+                android:padding="24dp">
 
-                <TextView
-                    android:id="@+id/tvProcessingStatus"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Processing..."
-                    android:textColor="@color/textPrimary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ProgressBar
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:indeterminate="true" />
+
+                    <TextView
+                        android:id="@+id/tvProcessingStatus"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:text="Processing..."
+                        android:textColor="@color/textPrimary"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <ProgressBar
                     android:id="@+id/progressBar"
                     style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_height="10dp"
+                    android:layout_marginTop="16dp"
                     android:indeterminate="false"
                     android:max="100"
-                    android:progress="0" />
+                    android:progress="0"
+                    android:progressTint="@color/colorPrimary" />
 
                 <TextView
                     android:id="@+id/tvProgressDetail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="12dp"
                     android:text="Extracting audio..."
                     android:textColor="@color/textSecondary"
                     android:textSize="13sp" />
@@ -212,88 +295,142 @@
                 android:id="@+id/resultsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- Summary Card -->
+                <!-- Summary Card 3D -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_card_dark"
+                    android:background="@drawable/bg_card_3d"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="24dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="📝 Summary"
-                        android:textColor="@color/textPrimary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📝 Summary"
+                            android:textColor="@color/textPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:shadowColor="#40000000"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2" />
+
+                        <ImageView
+                            android:id="@+id/btnCopySummary"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_copy"
+                            android:background="@drawable/bg_icon_3d"
+                            android:tint="@color/textSecondary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_marginVertical="16dp"
+                        android:background="@drawable/bg_input_3d" />
 
                     <TextView
                         android:id="@+id/tvKeyPoints"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:text="Loading..."
                         android:textColor="@color/textSecondary"
-                        android:textSize="14sp"
-                        android:lineSpacingExtra="6dp" />
+                        android:textSize="15sp"
+                        android:lineSpacingExtra="8dp" />
                 </LinearLayout>
 
-                <!-- Key Terms Card -->
+                <!-- Key Terms Card 3D -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_card_dark"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_card_3d"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="24dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="🔑 Key Terms"
-                        android:textColor="@color/textPrimary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🔑 Key Terms"
+                            android:textColor="@color/textPrimary"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:shadowColor="#40000000"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2" />
+
+                        <ImageView
+                            android:id="@+id/btnCopyTerms"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_copy"
+                            android:background="@drawable/bg_icon_3d"
+                            android:tint="@color/textSecondary" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:layout_marginVertical="16dp"
+                        android:background="@drawable/bg_input_3d" />
 
                     <TextView
                         android:id="@+id/tvTerminologies"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
                         android:text="Loading..."
                         android:textColor="@color/textSecondary"
-                        android:textSize="14sp"
-                        android:lineSpacingExtra="4dp" />
+                        android:textSize="15sp"
+                        android:lineSpacingExtra="6dp" />
                 </LinearLayout>
 
-                <!-- Download Button -->
-                <com.google.android.material.button.MaterialButton
+                <!-- Download Button 3D -->
+                <Button
                     android:id="@+id/btnDownloadNotes"
                     android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="16dp"
-                    android:text="Download Notes (TXT)"
-                    android:textSize="15sp"
-                    app:cornerRadius="26dp"
-                    app:icon="@drawable/ic_check"
-                    app:iconGravity="textStart" />
+                    android:layout_height="58dp"
+                    android:layout_marginTop="20dp"
+                    android:text="💾 Download Notes"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_button_3d" />
             </LinearLayout>
 
-            <!-- Analyze Button -->
-            <com.google.android.material.button.MaterialButton
+            <!-- Analyze Button 3D -->
+            <Button
                 android:id="@+id/btnAnalyze"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="16dp"
+                android:layout_height="58dp"
+                android:layout_marginTop="20dp"
                 android:enabled="false"
-                android:text="Analyze Audio"
-                android:textSize="15sp"
-                app:cornerRadius="26dp" />
+                android:text="✨ Analyze Audio"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_button_3d" />
 
         </LinearLayout>
     </ScrollView>
