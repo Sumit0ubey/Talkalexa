@@ -27,6 +27,7 @@ import java.util.Locale
 /**
  * RecyclerView adapter for displaying chat messages with streaming support.
  * Uses direct list management for real-time streaming updates.
+ * 🔧 FIXED: Added stable IDs and optimized updates to prevent UI glitching
  */
 class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -34,8 +35,18 @@ class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private const val VIEW_TYPE_USER = 0
         private const val VIEW_TYPE_ASSISTANT = 1
     }
-    
+
     private val messages = mutableListOf<ChatMessage>()
+
+    init {
+        // 🔧 FIX: Enable stable IDs to prevent view recycling issues
+        setHasStableIds(true)
+    }
+
+    override fun getItemId(position: Int): Long {
+        // 🔧 FIX: Use timestamp as stable ID
+        return messages.getOrNull(position)?.timestamp ?: position.toLong()
+    }
 
     override fun getItemCount(): Int = messages.size
 
@@ -65,28 +76,62 @@ class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
     
+    // 🔧 FIX: Payload binding to update only text without full rebind
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads)
+            return
+        }
+
+        val message = messages[position]
+        // 🔧 FIX: Only update text content, not entire view
+        when (holder) {
+            is AssistantMessageViewHolder -> holder.updateText(message)
+        }
+    }
+    
     /**
      * Submit new list - for normal updates
+     * 🔧 FIXED: Optimized to prevent unnecessary layout recalculations
      */
     fun submitList(newMessages: List<ChatMessage>) {
         val oldSize = messages.size
         val newSize = newMessages.size
-        
+
+        // 🔧 FIX: Only update if there are actual changes
+        if (oldSize == newSize && newSize > 0) {
+            // Check if last message text changed (streaming update)
+            val oldLast = messages.lastOrNull()
+            val newLast = newMessages.lastOrNull()
+
+            if (oldLast?.text != newLast?.text || oldLast?.isStreaming != newLast?.isStreaming) {
+                messages.clear()
+                messages.addAll(newMessages)
+                // 🔧 FIX: Use payload to update only text, not entire view
+                notifyItemChanged(newSize - 1, "text_update")
+            }
+            return
+        }
+
         messages.clear()
         messages.addAll(newMessages)
-        
-        // Check if this is a streaming update (last message changed)
-        if (oldSize == newSize && newSize > 0) {
-            // Just update last item for streaming
-            notifyItemChanged(newSize - 1)
-        } else if (newSize > oldSize) {
+
+        if (newSize > oldSize) {
             // New message added
-            notifyItemRangeInserted(oldSize, newSize - oldSize)
-            if (oldSize > 0) {
-                notifyItemChanged(oldSize - 1) // Update previous last item
+            if (newSize - oldSize == 1) {
+                notifyItemInserted(newSize - 1)
+            } else {
+                notifyItemRangeInserted(oldSize, newSize - oldSize)
             }
+        } else if (newSize < oldSize) {
+            // Messages removed (clear chat)
+            notifyDataSetChanged()
         } else {
-            // Full refresh
+            // Same size but different content
             notifyDataSetChanged()
         }
     }
@@ -187,11 +232,30 @@ class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         private val messageText: TextView = itemView.findViewById(R.id.messageText)
         private val messageTime: TextView = itemView.findViewById(R.id.messageTime)
         private val copyButton: ImageButton = itemView.findViewById(R.id.copyButton)
-        
+
+        // 🔧 FIX: Removed typing animation variables - caused glitching on some devices
+        @Suppress("unused")
         private var typingAnimator: android.animation.ValueAnimator? = null
-        private var lastAnimatedText: String? = null
+        private var currentMessage: ChatMessage? = null
+
+        /**
+         * 🔧 FIX: Update only text without rebinding entire view
+         * Prevents layout recalculation and glitching
+         */
+        fun updateText(message: ChatMessage) {
+            currentMessage = message
+            // Cancel any ongoing animation
+            typingAnimator?.cancel()
+
+            if (message.isStreaming) {
+                messageText.text = message.text
+            } else {
+                messageText.text = parseMarkdown(message.text)
+            }
+        }
 
         fun bind(message: ChatMessage) {
+            currentMessage = message
             // Cancel any ongoing animation
             typingAnimator?.cancel()
             
@@ -201,72 +265,24 @@ class MessagesAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 messageTime.visibility = View.GONE
                 copyButton.visibility = View.GONE
             } else {
-                // Check if this is a new message that needs typing animation
+                // 🔧 FIX: Show formatted text directly without animation
+                // Typing animation was causing glitching on some devices
                 val fullText = message.text
                 val formattedText = parseMarkdown(fullText)
-                
-                if (lastAnimatedText != fullText && fullText.length > 10) {
-                    // Start typing animation with markdown
-                    startTypingAnimation(fullText, formattedText)
-                    lastAnimatedText = fullText
-                } else {
-                    messageText.text = formattedText
-                }
-                
+                messageText.text = formattedText
+
                 messageTime.visibility = View.VISIBLE
                 copyButton.visibility = View.VISIBLE
                 messageTime.text = formatTime(message.timestamp)
             }
-            
+
             copyButton.setOnClickListener {
                 copyToClipboard(itemView.context, message.text.replace("▌", ""))
             }
-            
+
             itemView.setOnLongClickListener {
                 copyToClipboard(itemView.context, message.text.replace("▌", ""))
                 true
-            }
-        }
-        
-        private fun startTypingAnimation(fullText: String, formattedText: CharSequence) {
-            val words = fullText.split(" ")
-            val totalWords = words.size
-            
-            // Calculate duration based on text length (faster for longer texts)
-            val durationPerWord = when {
-                totalWords > 100 -> 15L
-                totalWords > 50 -> 20L
-                else -> 30L
-            }
-            val totalDuration = (totalWords * durationPerWord).coerceAtMost(3000L)
-            
-            typingAnimator = android.animation.ValueAnimator.ofInt(0, totalWords).apply {
-                duration = totalDuration
-                interpolator = android.view.animation.LinearInterpolator()
-                
-                addUpdateListener { animator ->
-                    val wordCount = animator.animatedValue as Int
-                    val displayText = if (wordCount < totalWords) {
-                        val partialText = words.take(wordCount).joinToString(" ") + " ▌"
-                        parseMarkdown(partialText)
-                    } else {
-                        formattedText
-                    }
-                    messageText.text = displayText
-                }
-                
-                addListener(object : android.animation.Animator.AnimatorListener {
-                    override fun onAnimationStart(animation: android.animation.Animator) {}
-                    override fun onAnimationEnd(animation: android.animation.Animator) {
-                        messageText.text = formattedText
-                    }
-                    override fun onAnimationCancel(animation: android.animation.Animator) {
-                        messageText.text = formattedText
-                    }
-                    override fun onAnimationRepeat(animation: android.animation.Animator) {}
-                })
-                
-                start()
             }
         }
         

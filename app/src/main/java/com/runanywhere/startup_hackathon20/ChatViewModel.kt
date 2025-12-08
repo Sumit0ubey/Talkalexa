@@ -321,27 +321,45 @@ class ChatViewModel(
     // Track last progress to prevent flicker
     private var lastDownloadProgress = 0f
 
+    // 🔧 FIX: Track last displayed percentage to prevent UI glitching
+    private var lastDisplayedPercent = -1
+
     // Track if we've requested battery exemption (one-time)
     private var hasRequestedBatteryExemption = false
-    
+
     fun downloadModel(modelId: String) {
         viewModelScope.launch {
             try {
                 android.util.Log.d("ChatViewModel", "Starting download for model: $modelId")
                 _statusMessage.value = "Downloading model..."
                 lastDownloadProgress = 0f
-                
+                lastDisplayedPercent = -1
+
                 RunAnywhere.downloadModel(modelId).collect { progress ->
                     // Only update if progress increased (prevents flicker)
                     if (progress >= lastDownloadProgress) {
                         lastDownloadProgress = progress
                         _downloadProgress.value = progress
-                        _statusMessage.value = "Downloading: ${(progress * 100).toInt()}%"
-                        android.util.Log.d("ChatViewModel", "Download progress: ${(progress * 100).toInt()}%")
+
+                        // 🔧 FIX: Only update status text every 2% to prevent glitching
+                        val currentPercent = (progress * 100).toInt()
+                        if (currentPercent != lastDisplayedPercent &&
+                            (currentPercent - lastDisplayedPercent >= 2 || currentPercent >= 99)
+                        ) {
+                            lastDisplayedPercent = currentPercent
+                            // Use fixed-width format to prevent layout shifts
+                            val percentText = String.format("%3d", currentPercent)
+                            _statusMessage.value = "Downloading: $percentText%"
+                            android.util.Log.d(
+                                "ChatViewModel",
+                                "Download progress: $currentPercent%"
+                            )
+                        }
                     }
                 }
                 _downloadProgress.value = null
                 lastDownloadProgress = 0f
+                lastDisplayedPercent = -1
                 _statusMessage.value = "Download complete! Please load the model."
                 // Refresh models list to show downloaded status
                 loadAvailableModels()
@@ -351,6 +369,7 @@ class ChatViewModel(
                 _statusMessage.value = "Download failed: ${e.message}"
                 _downloadProgress.value = null
                 lastDownloadProgress = 0f
+                lastDisplayedPercent = -1
             }
         }
     }

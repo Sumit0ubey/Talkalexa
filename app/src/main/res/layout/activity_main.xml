@@ -41,6 +41,7 @@
                 android:layout_height="8dp"
                 android:background="@drawable/status_indicator" />
 
+            <!-- 🔧 FIX: Added maxLines to prevent layout shifts -->
             <TextView
                 android:id="@+id/statusMessage"
                 android:layout_width="0dp"
@@ -49,7 +50,9 @@
                 android:layout_weight="1"
                 android:text="Initializing..."
                 android:textColor="@color/textSecondary"
-                android:textSize="13sp" />
+                android:textSize="13sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <!-- Voice indicator -->
             <ImageView

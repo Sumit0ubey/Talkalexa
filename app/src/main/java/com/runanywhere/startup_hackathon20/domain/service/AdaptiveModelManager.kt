@@ -198,36 +198,49 @@ class AdaptiveModelManager(private val context: Context) {
         return default
     }
     
+    // 🔧 FIX: Track last displayed progress to prevent UI glitching
+    private var lastDisplayedDownloadProgress = -1
+
     /**
      * Downloads and loads a model with progress tracking.
+     * 🔧 FIXED: Throttled progress updates to prevent UI glitching
      */
     suspend fun downloadAndLoadModel(modelId: String, modelKey: String) {
         withContext(Dispatchers.IO) {
             try {
                 val displayName = MODEL_DISPLAY_NAMES[modelKey] ?: modelKey
-                
+
                 // Check resources before downloading
                 val (canLoad, reason) = resourceManager.canLoadModel(modelKey)
                 if (!canLoad) {
                     _loadingState.value = ModelLoadingState.Error(reason)
                     return@withContext
                 }
-                
+
                 Log.i(TAG, "Downloading model: $displayName")
                 _loadingState.value = ModelLoadingState.Downloading(displayName, 0f)
-                
-                // Download with progress tracking
+                lastDisplayedDownloadProgress = 0
+
+                // Download with throttled progress tracking
                 RunAnywhere.downloadModel(modelId).collect { progress ->
-                    _loadingState.value = ModelLoadingState.Downloading(displayName, progress)
-                    Log.d(TAG, "Download progress: ${(progress * 100).toInt()}%")
+                    // 🔧 FIX: Only update every 2% to prevent glitching
+                    val currentPercent = (progress * 100).toInt()
+                    if (currentPercent - lastDisplayedDownloadProgress >= 2 || currentPercent >= 99) {
+                        lastDisplayedDownloadProgress = currentPercent
+                        _loadingState.value = ModelLoadingState.Downloading(displayName, progress)
+                        Log.d(TAG, "Download progress: $currentPercent%")
+                    }
                 }
-                
+
+                lastDisplayedDownloadProgress = -1
+
                 // Now load the model
                 loadModel(modelId, modelKey)
-                
+
             } catch (e: Exception) {
                 Log.e(TAG, "Download failed: ${e.message}", e)
                 _loadingState.value = ModelLoadingState.Error("Download failed: ${e.message}")
+                lastDisplayedDownloadProgress = -1
             }
         }
     }

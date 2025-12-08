@@ -313,8 +313,24 @@ class ChatFragment : Fragment() {
     }
 
     private fun setupRecyclerViews() {
-        messagesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        // Setup messages RecyclerView with anti-glitch settings
+        val layoutManager = LinearLayoutManager(requireContext()).apply {
+            stackFromEnd = true  // Start from bottom
+        }
+        messagesRecyclerView.layoutManager = layoutManager
         messagesRecyclerView.adapter = messagesAdapter
+
+        // 🔧 FIX: Disable item animations to prevent glitching
+        messagesRecyclerView.itemAnimator = null
+
+        // 🔧 FIX: Set item view cache size for smoother scrolling
+        messagesRecyclerView.setItemViewCacheSize(20)
+
+        // 🔧 FIX: Enable drawing cache
+        messagesRecyclerView.setHasFixedSize(false)
+
+        // 🔧 FIX: Disable nested scrolling
+        messagesRecyclerView.isNestedScrollingEnabled = false
 
         modelSelectorRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         modelSelectorRecyclerView.adapter = modelsAdapter
@@ -460,7 +476,10 @@ class ChatFragment : Fragment() {
             chatViewModel.messages.collectLatest { messages ->
                 messagesAdapter.submitList(messages)
                 if (messages.isNotEmpty()) {
-                    messagesRecyclerView.scrollToPosition(messages.size - 1)
+                    // 🔧 FIX: Smooth scroll with delay to prevent glitching
+                    messagesRecyclerView.post {
+                        messagesRecyclerView.smoothScrollToPosition(messages.size - 1)
+                    }
                 }
             }
         }

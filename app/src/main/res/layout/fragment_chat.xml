@@ -55,14 +55,18 @@
                     android:layout_height="6dp"
                     android:background="@drawable/status_indicator" />
 
+                <!-- 🔧 FIX: Added minWidth to prevent layout shifts during download -->
                 <TextView
                     android:id="@+id/statusMessage"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
+                    android:minWidth="120dp"
                     android:text="Ready"
                     android:textColor="@color/textSecondary"
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
             </LinearLayout>
         </LinearLayout>
 
@@ -105,15 +109,20 @@
         android:visibility="gone" />
 
     <!-- Messages list -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/messagesRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:paddingHorizontal="8dp" />
+    <!-- 🔧 FIX: Added anti-glitch settings -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/messagesRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:clipChildren="false"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:paddingHorizontal="8dp"
+            android:overScrollMode="never"
+            android:scrollbars="none"
+            android:fadeScrollbars="false" />
 
     <!-- Input bar -->
     <LinearLayout
