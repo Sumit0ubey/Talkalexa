@@ -6,14 +6,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.runanywhere.startup_hackathon20.ChatViewModel
 import com.runanywhere.startup_hackathon20.R
 import com.runanywhere.startup_hackathon20.ViewModelFactory
@@ -78,26 +77,32 @@ class HistoryFragment : Fragment() {
     }
 
     private fun showDeleteConfirmation(session: ChatSession) {
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
             .setTitle("Delete Chat")
             .setMessage("Are you sure you want to delete this chat?")
-            .setPositiveButton("Delete") { _, _ ->
+            .setPositiveButton("Delete") { dialog, _ ->
                 chatViewModel.deleteSession(session.id)
                 Toast.makeText(requireContext(), "Chat deleted", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
             .show()
     }
 
     private fun showClearAllConfirmation() {
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext(), R.style.AlertDialogTheme)
             .setTitle("Clear All History")
             .setMessage("Are you sure you want to delete all chat history? This cannot be undone.")
-            .setPositiveButton("Clear All") { _, _ ->
+            .setPositiveButton("Clear All") { dialog, _ ->
                 chatViewModel.clearAllSessions()
                 Toast.makeText(requireContext(), "All history cleared", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
             .show()
     }
 }

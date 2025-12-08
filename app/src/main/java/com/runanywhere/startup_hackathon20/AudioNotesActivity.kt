@@ -38,7 +38,6 @@ class AudioNotesActivity : AppCompatActivity() {
     }
 
     private lateinit var btnBack: ImageView
-    private lateinit var spinnerModel: Spinner
     private lateinit var btnSelectFile: Button
     private lateinit var selectedFileInfo: LinearLayout
     private lateinit var tvFileName: TextView
@@ -60,8 +59,6 @@ class AudioNotesActivity : AppCompatActivity() {
     private var model: Model? = null
     private var isModelReady = false
     private var isDownloading = false
-    private var selectedModelId: String? = null
-    private var isLoadingAIModel = false
 
     private val picker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { handleFile(it) }
@@ -85,7 +82,6 @@ class AudioNotesActivity : AppCompatActivity() {
 
     private fun initViews() {
         btnBack = findViewById(R.id.btnBack)
-        spinnerModel = findViewById(R.id.spinnerModel)
         btnSelectFile = findViewById(R.id.btnSelectFile)
         selectedFileInfo = findViewById(R.id.selectedFileInfo)
         tvFileName = findViewById(R.id.tvFileName)
@@ -99,125 +95,6 @@ class AudioNotesActivity : AppCompatActivity() {
         tvTerminologies = findViewById(R.id.tvTerminologies)
         btnDownloadNotes = findViewById(R.id.btnDownloadNotes)
         btnAnalyze = findViewById(R.id.btnAnalyze)
-        
-        setupModelSpinner()
-    }
-    
-    private fun setupModelSpinner() {
-        val modelNames = listOf(
-            "Select AI Model",
-            "Llama 3.2 1B",
-            "Phi 3.5 Mini",
-            "Qwen 2.5 0.5B",
-            "SmolLM2 135M"
-        )
-        
-        // Map display names to actual model IDs
-        val modelIds = mapOf(
-            "Llama 3.2 1B" to "Llama-3.2-1B-Instruct-Q4_K_M",
-            "Phi 3.5 Mini" to "Phi-3.5-mini-instruct-Q4_K_M",
-            "Qwen 2.5 0.5B" to "Qwen2.5-0.5B-Instruct-Q4_K_M",
-            "SmolLM2 135M" to "SmolLM2-135M-Instruct-Q4_K_M"
-        )
-        
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modelNames)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerModel.adapter = adapter
-        
-        spinnerModel.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (position > 0) {
-                    val displayName = modelNames[position]
-                    val actualModelId = modelIds[displayName]
-                    if (actualModelId != null) {
-                        loadAIModel(actualModelId, displayName)
-                    }
-                }
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-    }
-    
-    private fun loadAIModel(modelId: String, displayName: String) {
-        if (isLoadingAIModel) {
-            Toast.makeText(this, "Already loading model...", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        isLoadingAIModel = true
-        selectedModelId = modelId
-        
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@AudioNotesActivity, "⏳ Loading $displayName...", Toast.LENGTH_SHORT).show()
-                }
-                
-                Log.d(TAG, "Loading model: $modelId")
-                
-                // Actually load the model
-                RunAnywhere.loadModel(modelId)
-                
-                // Wait a bit for model to initialize
-                delay(1000)
-                
-                // Test if model loaded with a simple prompt
-                val testPrompt = "Hi"
-                var loaded = false
-                var responseReceived = false
-                
-                val opts = com.runanywhere.sdk.models.RunAnywhereGenerationOptions(
-                    maxTokens = 10, 
-                    temperature = 0.7f, 
-                    topP = 0.9f,
-                    enableRealTimeTracking = false, 
-                    stopSequences = emptyList(),
-                    streamingEnabled = true, 
-                    preferredExecutionTarget = null,
-                    structuredOutput = null, 
-                    systemPrompt = null, 
-                    topK = 40,
-                    repetitionPenalty = 1.1f, 
-                    frequencyPenalty = null,
-                    presencePenalty = null, 
-                    seed = null, 
-                    contextLength = 512
-                )
-                
-                try {
-                    withTimeoutOrNull(5000) {
-                        RunAnywhere.generateStream(testPrompt, opts).collect { chunk ->
-                            responseReceived = true
-                            if (chunk.isNotEmpty()) {
-                                loaded = true
-                                Log.d(TAG, "Model test response: $chunk")
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Model test failed: $e")
-                }
-                
-                withContext(Dispatchers.Main) {
-                    if (loaded) {
-                        Toast.makeText(this@AudioNotesActivity, "✅ $displayName ready!", Toast.LENGTH_SHORT).show()
-                        Log.d(TAG, "Model $modelId loaded successfully")
-                    } else if (responseReceived) {
-                        Toast.makeText(this@AudioNotesActivity, "⚠️ $displayName loaded but slow", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this@AudioNotesActivity, "❌ $displayName failed to respond", Toast.LENGTH_LONG).show()
-                    }
-                }
-                
-            } catch (e: Exception) {
-                Log.e(TAG, "Model load error: $e", e)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@AudioNotesActivity, "❌ Failed: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            } finally {
-                isLoadingAIModel = false
-            }
-        }
     }
 
     private fun setupListeners() {
